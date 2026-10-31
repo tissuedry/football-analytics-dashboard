@@ -13,7 +13,7 @@ EuroScout AI adalah platform analitik dan visualisasi data performa pemain sepak
 | :--- | :--- | :--- | :---: |
 | **Anggota 1** | **Attacking Analytics** | Analisis $xG$ (*Expected Goals*), *finishing efficiency* ($Gls - xG$), *Shot-Creating Actions* (SCA), dan akurasi tembakan. | ✅ Selesai |
 | **Anggota 2** | **Playmaking & Passing** | *Progressive Passes*, *Key Passes*, $xAG$ (*Expected Assisted Goals*), dan *pass completion rate* ($Cmp\%$). | ⏳ In Progress |
-| **Anggota 3** | **Defensive & Workrate** | *Tackles*, *Interceptions*, *Ball Recoveries*, dan distribusi aksi bertahan (*defensive 3rd, mid 3rd, att 3rd*). | ⏳ In Progress |
+| **Anggota 3** | **Defensive & Workrate** | *Tackles*, *Interceptions*, *Ball Recoveries*, dan distribusi aksi bertahan (*defensive 3rd, mid 3rd, att 3rd*). | ✅ Selesai |
 | **Anggota 4** | **Scouting / ML Clustering** | Model *Cosine Similarity Search* & *K-Means Clustering* (dengan PCA & evaluasi Silhouette / Elbow) untuk *Player Recommendation Tool* serta *Percentile Radar Chart*. | ✅ Selesai |
 | **Anggota 5** | **Dashboard & Integration** | Orkestrasi Streamlit UI 5-tabs, *Executive Overview & League Intelligence*, arsitektur data loader (`data_loader.py`), tema visual (`theme.py`), dan dokumentasi repositori. | ✅ Selesai |
 
