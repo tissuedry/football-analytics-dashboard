@@ -1,59 +1,59 @@
 # ⚽ EuroScout AI
 
-> **Advanced Scouting & Performance Intelligence Platform**  
+> **Advanced Scouting & Performance Intelligence Platform**
 > Europe's Big 5 Football Leagues (2024–2025 Season)
 
-EuroScout AI adalah platform analitik dan visualisasi data performa pemain sepak bola di 5 liga top Eropa (Premier League, La Liga, Serie A, Bundesliga, dan Ligue 1) musim 2024–2025 berbasis data FBref. Aplikasi ini dibangun menggunakan Streamlit, Plotly, Pandas, dan Scikit-learn dengan pembagian 5 modul terintegrasi.
+EuroScout AI is an analytics and visualization platform for football player performance across Europe's top 5 leagues (Premier League, La Liga, Serie A, Bundesliga, and Ligue 1) for the 2024–2025 season, built on FBref data. The application is built with Streamlit, Plotly, Pandas, and Scikit-learn, and is organized into 5 integrated modules.
 
 ---
 
-## 👥 Pembagian Tugas & Modul Anggota Kelompok
+## 👥 Team Roles & Module Assignments
 
-| Anggota | Tugas / Modul Fokus | Fitur / Metrik Utama | Status |
+| Member | Task / Focus Module | Key Features / Metrics | Status |
 | :--- | :--- | :--- | :---: |
-| **Anggota 1** | **Attacking Analytics** | Analisis $xG$ (*Expected Goals*), *finishing efficiency* ($Gls - xG$), *Shot-Creating Actions* (SCA), dan akurasi tembakan. | ✅ Selesai |
-| **Anggota 2** | **Playmaking & Passing** | *Progressive Passes*, *Key Passes*, $xAG$ (*Expected Assisted Goals*), dan *pass completion rate* ($Cmp\%$). | ⏳ In Progress |
-| **Anggota 3** | **Defensive & Workrate** | *Tackles*, *Interceptions*, *Ball Recoveries*, dan distribusi aksi bertahan (*defensive 3rd, mid 3rd, att 3rd*). | ✅ Selesai |
-| **Anggota 4** | **Scouting / ML Clustering** | Model *Cosine Similarity Search* & *K-Means Clustering* (dengan PCA & evaluasi Silhouette / Elbow) untuk *Player Recommendation Tool* serta *Percentile Radar Chart*. | ✅ Selesai |
-| **Anggota 5** | **Dashboard & Integration** | Orkestrasi Streamlit UI 5-tabs, *Executive Overview & League Intelligence*, arsitektur data loader (`data_loader.py`), tema visual (`theme.py`), dan dokumentasi repositori. | ✅ Selesai |
+| **Member 1** | **Attacking Analytics** | $xG$ (*Expected Goals*) analysis, *finishing efficiency* ($Gls - xG$), *Shot-Creating Actions* (SCA), and shot accuracy. | ✅ Done |
+| **Member 2** | **Playmaking & Passing** | *Progressive Passes*, *Key Passes*, $xAG$ (*Expected Assisted Goals*), and *pass completion rate* ($Cmp\%$). | ⏳ In Progress |
+| **Member 3** | **Defensive & Workrate** | *Tackles*, *Interceptions*, *Ball Recoveries*, and distribution of defensive actions (*defensive 3rd, mid 3rd, att 3rd*). | ✅ Done |
+| **Member 4** | **Scouting / ML Clustering** | *Cosine Similarity Search* & *K-Means Clustering* models (with PCA and Silhouette / Elbow evaluation) for the *Player Recommendation Tool* and *Percentile Radar Chart*. | ✅ Done |
+| **Member 5** | **Dashboard & Integration** | Streamlit 5-tab UI orchestration, *Executive Overview & League Intelligence*, data loader architecture (`data_loader.py`), visual theme (`theme.py`), and repository documentation. | ✅ Done |
 
 ---
 
-## 📁 Struktur Direktori Proyek
+## 📁 Project Directory Structure
 
 ```text
 euroscout-ai/
-├── app.py                  # Anggota 5 (Main Orchestrator & Streamlit Layout)
-├── requirements.txt        # Anggota 5 (Daftar dependensi Python)
-├── README.md               # Anggota 5 (Dokumentasi lengkap repositori)
+├── app.py                  # Member 5 (Main Orchestrator & Streamlit Layout)
+├── requirements.txt        # Member 5 (Python dependency list)
+├── README.md               # Member 5 (Full repository documentation)
 ├── data/
-│   └── players_data.csv    # Dataset statistik pemain FBref Big 5 2024-2025
+│   └── players_data.csv    # FBref Big 5 player stats dataset 2024-2025
 ├── utils/
-│   ├── data_loader.py      # Anggota 5 (Pembersihan, normalisasi kolom, & caching)
-│   └── theme.py            # Anggota 5 (Design system gelap & template Plotly terpadu)
+│   ├── data_loader.py      # Member 5 (Cleaning, column normalization, & caching)
+│   └── theme.py            # Member 5 (Dark design system & unified Plotly template)
 └── modules/
-    ├── overview.py         # Anggota 5 (Tab 1: Executive Overview & League Intelligence)
-    ├── attacking.py        # Anggota 1 (Tab 2: Attacking Analytics & Finishing)
-    ├── playmaking.py       # Anggota 2 (Tab 3: Passing & Playmaking)
-    ├── defensive.py        # Anggota 3 (Tab 4: Defensive Workrate)
-    └── recommender.py      # Anggota 4 (Tab 5: ML Scouting & Similarity Search)
+    ├── overview.py         # Member 5 (Tab 1: Executive Overview & League Intelligence)
+    ├── attacking.py        # Member 1 (Tab 2: Attacking Analytics & Finishing)
+    ├── playmaking.py       # Member 2 (Tab 3: Passing & Playmaking)
+    ├── defensive.py        # Member 3 (Tab 4: Defensive Workrate)
+    └── recommender.py      # Member 4 (Tab 5: ML Scouting & Similarity Search)
 ```
 
 ---
 
-## 🚀 Panduan Instalasi & Menjalankan Aplikasi
+## 🚀 Installation & Running Guide
 
-### 1. Prasyarat
-* Python 3.9 atau lebih baru
+### 1. Prerequisites
+* Python 3.9 or newer
 * pip / virtualenv
 
-### 2. Clone Repositori & Masuk Direktori
+### 2. Clone the Repository & Enter the Directory
 ```bash
 git clone https://github.com/<username>/football-analytics-dashboard.git
 cd football-analytics-dashboard
 ```
 
-### 3. Buat dan Aktifkan Virtual Environment
+### 3. Create and Activate a Virtual Environment
 * **Windows (PowerShell):**
   ```powershell
   python -m venv .venv
@@ -65,20 +65,20 @@ cd football-analytics-dashboard
   source .venv/bin/activate
   ```
 
-### 4. Pasang Dependensi
+### 4. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Jalankan Aplikasi
+### 5. Run the Application
 ```bash
 streamlit run app.py
 ```
-Aplikasi akan terbuka otomatis di peramban pada alamat `http://localhost:8501`.
+The app will open automatically in your browser at `http://localhost:8501`.
 
 ---
 
-## 📊 Sumber Data
-Dataset dihimpun dari data publik FBref untuk 5 liga top Eropa musim 2024–2025:
+## 📊 Data Source
+The dataset is compiled from public FBref data for the top 5 European leagues for the 2024–2025 season:
 * **Kaggle**: [Football Players Stats 2024-2025](https://www.kaggle.com/datasets/hubertsidorowicz/football-players-stats-2024-2025)
-* Data mencakup statistik gabungan: Standard Stats, Shooting, Passing, Goal and Shot Creation, Defense, Possession, Playing Time, dan Goalkeeping.
+* The data covers combined statistics from: Standard Stats, Shooting, Passing, Goal and Shot Creation, Defense, Possession, Playing Time, and Goalkeeping.
