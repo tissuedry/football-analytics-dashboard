@@ -1,15 +1,15 @@
 """EuroScout AI — Football Players Stats 2024-2025: Advanced Scouting &
 Performance Intelligence Platform.
 
-Kerangka aplikasi: memuat data, menyediakan filter global (liga, posisi,
-minimal menit main), lalu merender tiap modul di tab masing-masing. Semua
-logika analisis ada di modules/*.py — app.py hanya melakukan orkestrasi (Anggota 5).
+Application skeleton: loads data, provides global filters (league, position,
+minimum minutes played), then renders each module in its own tab. All
+analysis logic lives in modules/*.py — app.py only handles orchestration (Member 5).
 """
 
 import sys
 from pathlib import Path
 
-# Pastikan root proyek terdaftar di sys.path
+# Ensure the project root is on sys.path
 _ROOT = Path(__file__).resolve().parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))

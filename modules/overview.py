@@ -1,15 +1,16 @@
-"""Anggota 5 — Executive Overview & League Intelligence.
+"""Member 5 — Executive Overview & League Intelligence.
 
-Menampilkan ringkasan makro performa kompetisi, demografi usia, perbandingan
-produktivitas antar-liga, dan sorotan pemain terbaik lintas kategori di Big 5 liga Eropa.
-Kontrak: satu fungsi render(df) yang mengisi seluruh isi tab ini.
-Gunakan PLOTLY_TEMPLATE, COLORS, COLOR_SEQ dari utils/theme.py untuk semua grafik.
+Shows a macro summary of competition performance, age demographics,
+cross-league productivity comparison, and top-player spotlights across
+categories in Europe's Big 5 leagues.
+Contract: a single render(df) function that fills this entire tab.
+Use PLOTLY_TEMPLATE, COLORS, COLOR_SEQ from utils/theme.py for all charts.
 """
 
 import sys
 from pathlib import Path
 
-# Pastikan root proyek terdaftar di sys.path agar 'utils' selalu dapat diimpor
+# Ensure the project root is on sys.path so 'utils' can always be imported
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -24,9 +25,9 @@ from utils.theme import COLORS, COLOR_SEQ, PLOTLY_TEMPLATE
 
 
 def _league_productivity_chart(df: pd.DataFrame) -> None:
-    """Grafik perbandingan produktivitas gol aktual vs xG per liga."""
+    """Chart comparing actual goals productivity vs xG per league."""
     if "league" not in df.columns or "goals" not in df.columns or "xg" not in df.columns:
-        st.info("Data liga, gol, atau xG tidak lengkap.")
+        st.info("League, goals, or xG data is incomplete.")
         return
 
     league_stats = (
@@ -40,7 +41,7 @@ def _league_productivity_chart(df: pd.DataFrame) -> None:
     )
 
     if league_stats.empty:
-        st.info("Tidak ada data untuk grafik liga.")
+        st.info("No data available for the league chart.")
         return
 
     league_stats["finishing_diff"] = league_stats["total_goals"] - league_stats["total_xg"]
@@ -80,10 +81,10 @@ def _league_productivity_chart(df: pd.DataFrame) -> None:
 
 
 def _age_distribution_chart(df: pd.DataFrame) -> None:
-    """Distribusi usia pemain berdasarkan posisi."""
+    """Age distribution of players by position."""
     valid_age = df.dropna(subset=["age"]).copy()
     if valid_age.empty:
-        st.info("Data usia tidak tersedia.")
+        st.info("Age data is not available.")
         return
 
     pos_colors = {
@@ -113,7 +114,7 @@ def _age_distribution_chart(df: pd.DataFrame) -> None:
 
 
 def _team_goals_chart(df: pd.DataFrame) -> None:
-    """Top 10 klub paling produktif mencetak gol."""
+    """Top 10 clubs most prolific at scoring goals."""
     if "team" not in df.columns or "goals" not in df.columns:
         return
 
@@ -156,7 +157,7 @@ def _team_goals_chart(df: pd.DataFrame) -> None:
 
 
 def render(df: pd.DataFrame) -> None:
-    """Render seluruh visualisasi dan analisis makro pada tab Overview."""
+    """Render all visualizations and macro analysis on the Overview tab."""
     st.subheader("Executive Overview & League Intelligence")
     st.caption(
         "Macro-level perspective across Europe's Big 5 Leagues (2024–2025). "
@@ -164,10 +165,10 @@ def render(df: pd.DataFrame) -> None:
     )
 
     if df is None or df.empty:
-        st.warning("Tidak ada pemain yang cocok dengan filter saat ini. Silakan sesuaikan filter di sidebar.")
+        st.warning("No players match the current filters. Please adjust the filters in the sidebar.")
         return
 
-    # KPI Top Level
+    # Top-level KPIs
     total_players = len(df)
     total_goals = float(df["goals"].sum()) if "goals" in df.columns else 0.0
     total_xg = float(df["xg"].sum()) if "xg" in df.columns else 0.0
@@ -233,18 +234,18 @@ def render(df: pd.DataFrame) -> None:
             top_league = league_sum.idxmax()
             top_league_goals = league_sum.max()
             insights.append(
-                f"Liga dengan jumlah gol terbanyak adalah **{top_league}** dengan total **{top_league_goals:,.0f} gol**."
+                f"The league with the most goals scored is **{top_league}** with a total of **{top_league_goals:,.0f} goals**."
             )
 
     if total_matches > 0 and total_goals > 0:
         gpg = total_goals / total_matches
         insights.append(
-            f"Rata-rata gol yang tercipta pada sampel ini adalah **{gpg:.2f} gol per 90 menit** bermain."
+            f"The average goal output in this sample is **{gpg:.2f} goals per 90 minutes** played."
         )
 
     if avg_age > 0:
         insights.append(
-            f"Rata-rata usia pemain yang terpantau adalah **{avg_age:.1f} tahun**, dengan mayoritas pemain berada di rentang usia prima (23–29 tahun)."
+            f"The average age of players tracked here is **{avg_age:.1f} years**, with most players in their prime age range (23–29 years)."
         )
 
     st.info("**Key Insight**\n\n" + " ".join(insights))

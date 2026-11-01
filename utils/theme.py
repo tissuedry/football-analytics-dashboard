@@ -1,8 +1,8 @@
-"""Tema visual bersama untuk seluruh grafik Plotly di EuroScout AI.
+"""Shared visual theme for all Plotly charts in EuroScout AI.
 
-Semua modul (attacking, playmaking, defensive, recommender) WAJIB memakai
-PLOTLY_TEMPLATE, COLORS, dan COLOR_SEQ dari file ini agar tampilan dashboard
-konsisten.
+All modules (attacking, playmaking, defensive, recommender) MUST use
+PLOTLY_TEMPLATE, COLORS, and COLOR_SEQ from this file so the dashboard
+looks consistent.
 """
 
 import plotly.graph_objects as go
@@ -18,14 +18,14 @@ COLORS = {
     "accent": "#F59E0B",
     "positive": "#4ADE80",
     "negative": "#F87171",
-    # warna tetap per posisi, dipakai di seluruh modul
+    # fixed colors per position, used across all modules
     "FW": "#F87171",
     "MF": "#2DD4BF",
     "DF": "#60A5FA",
     "GK": "#FBBF24",
 }
 
-# urutan warna kategorikal untuk grafik multi-seri (liga, tim, pemain, dll)
+# categorical color sequence for multi-series charts (leagues, teams, players, etc.)
 COLOR_SEQ = [
     "#2DD4BF", "#F59E0B", "#60A5FA", "#F87171",
     "#A78BFA", "#4ADE80", "#FB923C", "#38BDF8",

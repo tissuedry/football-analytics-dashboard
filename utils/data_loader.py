@@ -1,23 +1,23 @@
-"""Pemuat & pembersih data pemain untuk EuroScout AI.
+"""Player data loader & cleaner for EuroScout AI.
 
-Sumber: data/players_data-2024_2025_cleansing.csv (FBref, Big 5 liga Eropa
-2024-2025). Kolom asli adalah gabungan beberapa tabel statistik FBref
+Source: data/players_data-2024_2025_cleansing.csv (FBref, Europe's Big 5
+leagues 2024-2025). The raw columns are a merge of several FBref stat tables
 (standard, shooting, passing, passing_types, gca, defense, possession,
-playing_time, misc, keeper, keeper_adv), sehingga banyak nama kolom berulang
-yang sudah dibedakan lewat suffix (mis. `Tkl` vs `Tkl_stats_defense`).
+playing_time, misc, keeper, keeper_adv), so many column names repeat and are
+already disambiguated via a suffix (e.g. `Tkl` vs `Tkl_stats_defense`).
 
-load_data() melakukan:
-1. Membuang kolom index mentah (`source_row`, `Rk`).
-2. Menormalkan SEMUA nama kolom ke snake_case huruf kecil
-   (mis. `xAG` -> `xag`, `Tkl+Int` -> `tkl_int`, `SoT%` -> `sot_pct`).
-3. Mengganti nama kolom inti ke istilah standar lintas modul lewat RENAME_MAP
-   (player, team, league, pos, minutes, goals, assists, xg, xag, dst).
-4. Menambahkan `pos`: penyederhanaan `Pos` asli (bisa multi-posisi, mis.
-   "MF,FW") menjadi satu label utama FW / MF / DF / GK.
-5. Menambahkan `league`: pembersihan `Comp` asli (mis. "eng Premier League"
+load_data() does the following:
+1. Drops raw index columns (`source_row`, `Rk`).
+2. Normalizes ALL column names to lowercase snake_case
+   (e.g. `xAG` -> `xag`, `Tkl+Int` -> `tkl_int`, `SoT%` -> `sot_pct`).
+3. Renames core columns to standard terms shared across modules via RENAME_MAP
+   (player, team, league, pos, minutes, goals, assists, xg, xag, etc.).
+4. Adds `pos`: simplifies the raw `Pos` value (can be multi-position, e.g.
+   "MF,FW") down to a single primary label FW / MF / DF / GK.
+5. Adds `league`: cleans the raw `Comp` value (e.g. "eng Premier League"
    -> "Premier League").
 
-Modul lain TIDAK BOLEH membaca CSV sendiri — selalu panggil load_data().
+Other modules MUST NOT read the CSV themselves — always call load_data().
 """
 
 import os
@@ -28,7 +28,7 @@ import streamlit as st
 
 DATA_PATH = "data/players_data.csv"
 
-# kolom asli (setelah snake_case) -> nama standar yang dipakai di seluruh modul
+# raw column (after snake_case) -> standard name used across all modules
 RENAME_MAP = {
     "player": "player",
     "nation": "nation",
@@ -77,9 +77,9 @@ def _snake_case(col: str) -> str:
 
 
 def _dedupe_columns(cols: list) -> list:
-    """Beberapa kolom asli masih bisa bentrok setelah snake_case (mis. 'xG' vs
-    'xG+/-' -> 'xg' vs 'xg_net'). Kolom pertama dipertahankan apa adanya,
-    duplikat berikutnya diberi suffix _2, _3, dst agar DataFrame tidak error."""
+    """Some raw columns can still collide after snake_case (e.g. 'xG' vs
+    'xG+/-' -> 'xg' vs 'xg_net'). The first column is kept as-is;
+    later duplicates get a _2, _3, ... suffix so the DataFrame doesn't error."""
     seen = {}
     result = []
     for c in cols:
@@ -93,7 +93,7 @@ def _dedupe_columns(cols: list) -> list:
 
 
 def _simplify_pos(raw) -> str:
-    """Ambil posisi utama dari nilai Pos asli (mis. 'MF,FW' -> 'MF')."""
+    """Get the primary position from the raw Pos value (e.g. 'MF,FW' -> 'MF')."""
     if not isinstance(raw, str) or not raw:
         return "DF"
     first = raw.split(",")[0].strip()
@@ -101,7 +101,7 @@ def _simplify_pos(raw) -> str:
 
 
 def _simplify_league(raw):
-    """Buang kode negara di depan nama liga (mis. 'eng Premier League' -> 'Premier League')."""
+    """Strip the leading country code from the league name (e.g. 'eng Premier League' -> 'Premier League')."""
     if not isinstance(raw, str):
         return raw
     parts = raw.split(" ", 1)
@@ -118,7 +118,7 @@ def load_data(path: str = DATA_PATH) -> pd.DataFrame:
 
     df["pos"] = df["pos_raw"].apply(_simplify_pos)
     df["league"] = df["league_raw"].apply(_simplify_league)
-    df = df.copy()  # defragmentasi setelah beberapa insert kolom di atas
+    df = df.copy()  # defragment after several column inserts above
 
     numeric_cols = [
         "age", "minutes", "nineties", "goals", "assists", "goals_assists", "xg", "npxg", "xag", "npxg_xag", "shots", "shots_on_target", "sca", "sca_per90", "gca", "gca_per90", "key_passes", "cmp", "att", "cmp_pct",

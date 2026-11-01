@@ -1,14 +1,14 @@
-"""Anggota 4 — ML Scouting & Similarity.
+"""Member 4 — ML Scouting & Similarity.
 
-Fitur "cari pemain mirip [Player X]" lintas liga:
-- Fitur dinormalisasi per-90 menit lalu di-scale (StandardScaler).
-- Kemiripan dihitung dengan Cosine Similarity antar pemain pada posisi yang
-  sama (FW/MF/DF/GK dibandingkan dalam kelompoknya masing-masing karena
-  profil statistiknya tidak sebanding lintas posisi).
-- K-Means dipakai untuk mengelompokkan pemain dalam posisi yang sama menjadi
-  beberapa "tipe peran" dan memberi konteks tambahan di luar daftar mirip.
-- Model & similarity matrix dibungkus @st.cache_resource agar tidak dihitung
-  ulang setiap klik.
+"Find players similar to [Player X]" feature across leagues:
+- Features are normalized per-90-minutes then scaled (StandardScaler).
+- Similarity is computed with Cosine Similarity between players in the same
+  position group (FW/MF/DF/GK are compared within their own group because
+  their statistical profiles aren't comparable across positions).
+- K-Means is used to group players within the same position into several
+  "role types" and give extra context beyond the similarity list.
+- The model & similarity matrix are wrapped in @st.cache_resource so they
+  aren't recomputed on every click.
 """
 
 import sys
@@ -30,7 +30,7 @@ from sklearn.preprocessing import StandardScaler
 
 from utils.theme import COLORS, COLOR_SEQ, PLOTLY_TEMPLATE
 
-# fitur per kelompok posisi — semua dihitung per-90 menit sebelum di-scale
+# features per position group — all computed per-90-minutes before scaling
 POSITION_FEATURES = {
     "FW": ["goals", "xg", "npxg", "shots", "shots_on_target", "sca", "gca", "prog_carries", "key_passes"],
     "MF": ["xag", "key_passes", "prog_passes", "prog_carries", "sca", "gca", "tackles", "interceptions"],
@@ -38,10 +38,10 @@ POSITION_FEATURES = {
     "GK": ["saves", "save_pct", "cs_pct", "ga90", "psxg"],
 }
 
-MIN_NINETIES_FOR_SIMILARITY = 5  # ~450 menit, ambang lebih longgar dari filter global
+MIN_NINETIES_FOR_SIMILARITY = 5  # ~450 minutes, a looser threshold than the global filter
 
-# label yang dibaca manusia untuk tiap nama kolom fitur mentah, dipakai di
-# sumbu radar chart dan ringkasan cluster (menghindari singkatan FBref mentah)
+# human-readable labels for each raw feature column name, used on the
+# radar chart axes and cluster summary (avoids raw FBref abbreviations)
 FEATURE_LABELS = {
     "goals": "Goals",
     "xg": "Expected Goals (xG)",
@@ -75,25 +75,25 @@ def _per90(df: pd.DataFrame, cols: list) -> pd.DataFrame:
             out[col] = 0.0
             continue
         if col.endswith("_pct") or col == "ga90":
-            out[col] = df[col]  # sudah berupa rasio/rata-rata, tidak perlu dibagi menit
+            out[col] = df[col]  # already a ratio/average, no need to divide by minutes
         else:
-            # psxg di CSV asli kumulatif semusim (korelasi 0.93 dengan menit
-            # bermain), BUKAN rate — harus dibagi menit seperti saves/shots,
-            # kalau tidak jadi proxy "berapa lama main" bukan "kualitas kiper"
+            # psxg in the raw CSV is cumulative for the season (correlation 0.93 with
+            # minutes played), NOT a rate — must be divided by minutes like saves/shots,
+            # otherwise it becomes a proxy for "how long they played" not "keeper quality"
             out[col] = (df[col] / nineties).fillna(0.0)
     return out.fillna(0.0)
 
 
 def _optimal_k(scaled: np.ndarray, k_min: int = 2, k_max: int = 8):
-    """Tentukan jumlah cluster lewat dua metode:
-    - Elbow method: inertia (WCSS) per k, dipakai sebagai konfirmasi visual
-      (penurunan tajam = cluster masih memisahkan kelompok berbeda; mulai
-      landai = kelompok sudah mulai mirip).
-    - Silhouette score: untuk tiap k, ukur seberapa rapat tiap pemain ke
-      cluster-nya sendiri dibanding cluster tetangga terdekat (rentang -1..1,
-      makin tinggi makin baik). Ini metrik yang lebih objektif dibanding
-      mencari 'siku' secara visual, jadi dipakai sebagai PENENTU FINAL k —
-      Elbow tetap ditampilkan sebagai pembanding, bukan penentu.
+    """Determine the number of clusters via two methods:
+    - Elbow method: inertia (WCSS) per k, shown as a visual cross-check
+      (a sharp drop = clusters still separate distinct groups; it flattening
+      out = groups are starting to look alike).
+    - Silhouette score: for each k, measures how tightly each player fits its
+      own cluster versus the nearest neighboring cluster (range -1..1, higher
+      is better). This is a more objective metric than visually looking for
+      an 'elbow', so it's used as the FINAL DECIDER for k —
+      Elbow is still shown for comparison, not as the decider.
     """
     k_max = min(k_max, scaled.shape[0] - 1)
     if k_max < k_min:
@@ -111,16 +111,16 @@ def _optimal_k(scaled: np.ndarray, k_min: int = 2, k_max: int = 8):
 
 
 def _pca_for_clustering(scaled: np.ndarray, variance_threshold: float = 0.8):
-    """PCA khusus untuk tahap CLUSTERING (bukan untuk similarity/radar chart,
-    yang tetap pakai fitur asli agar tiap statistik tetap bisa dibaca
-    terpisah). Fitur mentah yang dipakai di sini sering saling berkorelasi
-    tinggi (mis. Goals, xG, npxG, Shots, Shots on Target sama-sama mewakili
-    konsep 'produktivitas finishing') — tanpa PCA, 1 konsep ikut dihitung
-    berkali-kali di jarak Euclidean KMeans sehingga bobotnya membesar secara
-    artifisial dibanding konsep lain yang cuma diwakili sedikit fitur (mis.
-    kreasi peluang). PCA membentuk sumbu baru yang saling independen (PC1,
-    PC2, ...); kita ambil komponen secukupnya untuk menutup
-    `variance_threshold` dari total variansi, sisanya dibuang sebagai noise.
+    """PCA used only for the CLUSTERING stage (not for similarity/radar chart,
+    which still uses the raw features so each stat stays individually
+    readable). The raw features used here are often highly correlated with
+    each other (e.g. Goals, xG, npxG, Shots, Shots on Target all represent
+    the 'finishing productivity' concept) — without PCA, one concept gets
+    counted multiple times in KMeans's Euclidean distance, artificially
+    inflating its weight compared to concepts represented by fewer features
+    (e.g. chance creation). PCA builds new, mutually independent axes (PC1,
+    PC2, ...); we take just enough components to cover `variance_threshold`
+    of the total variance, discarding the rest as noise.
     """
     n_features = scaled.shape[1]
     max_components = min(n_features, scaled.shape[0] - 1)
@@ -135,7 +135,7 @@ def _pca_for_clustering(scaled: np.ndarray, variance_threshold: float = 0.8):
 
 @st.cache_resource
 def _build_similarity(df: pd.DataFrame, pos: str):
-    """Scaler + matriks cosine similarity untuk satu kelompok posisi."""
+    """Scaler + cosine similarity matrix for one position group."""
     features = POSITION_FEATURES[pos]
     subset = df[df["pos"] == pos].copy()
     subset = subset[subset["nineties"] >= MIN_NINETIES_FOR_SIMILARITY]
@@ -145,7 +145,7 @@ def _build_similarity(df: pd.DataFrame, pos: str):
     feat_df = _per90(subset, features)
     scaler = StandardScaler()
     scaled = scaler.fit_transform(feat_df.values)
-    sim_matrix = cosine_similarity(scaled)  # similarity & radar tetap di ruang fitur asli
+    sim_matrix = cosine_similarity(scaled)  # similarity & radar stay in the original feature space
 
     pca_scaled, pca_var_ratio, n_components = _pca_for_clustering(scaled)
     n_clusters, inertias, silhouettes = _optimal_k(pca_scaled)
@@ -167,9 +167,9 @@ def _radar_chart(subset, feat_df, idx_a, idx_b, label_a, label_b):
     row_a = feat_df.iloc[idx_a]
     row_b = feat_df.iloc[idx_b]
 
-    # percentile rank (0-100) terhadap SEMUA pemain sekelompok posisi, bukan
-    # "persentase dari nilai maksimum" — menghindari 1 outlier menekan semua
-    # pemain lain ke angka kecil yang menyesatkan.
+    # percentile rank (0-100) against ALL players in the same position group, not
+    # "percentage of the max value" — avoids a single outlier compressing all
+    # other players down to misleadingly small numbers.
     percentile_df = feat_df.rank(pct=True) * 100
     norm_a = percentile_df.iloc[idx_a].tolist()
     norm_b = percentile_df.iloc[idx_b].tolist()
@@ -226,8 +226,8 @@ def _radar_chart(subset, feat_df, idx_a, idx_b, label_a, label_b):
 
 
 def _describe_clusters(subset, scaled, features, top_k=2):
-    """Untuk tiap cluster, cari fitur dengan rata-rata z-score tertinggi agar
-    pengguna tahu gaya main apa yang menonjol — bukan cuma label angka 0-4."""
+    """For each cluster, find the features with the highest average z-score so
+    the user knows which playing style stands out — not just a 0-4 number label."""
     scaled_df = pd.DataFrame(scaled, columns=features)
     scaled_df["cluster"] = subset["cluster"].values
     cluster_means = scaled_df.groupby("cluster")[features].mean()

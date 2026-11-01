@@ -1,19 +1,13 @@
 
-"""Anggota 1 — Attacking Analytics & Finishing.
+"""Member 1 — Attacking Analytics & Finishing.
 
-TODO: Gol vs xG (efisiensi finishing), pemain paling produktif, grafik Plotly.
-Kontrak: satu fungsi render(df) yang mengisi seluruh isi tab ini. Gunakan
-PLOTLY_TEMPLATE, COLORS, COLOR_SEQ dari utils/theme.py untuk semua grafik, dan
-tutup dengan kotak Key Insight berisi kesimpulan tertulis.
-""
-
-Analisis:
+Analysis:
 - Goals vs Expected Goals (xG)
 - Finishing efficiency: Goals - xG
 - Shot-Creating Actions (SCA) per 90 minutes
 
-render(df) menerima DataFrame yang sudah difilter oleh app.py.
-Modul ini tidak membaca CSV sendiri dan tidak mengubah DataFrame asli.
+render(df) receives a DataFrame already filtered by app.py.
+This module does not read its own CSV and does not mutate the original DataFrame.
 """
 
 import sys
@@ -33,21 +27,21 @@ from utils.theme import COLORS, COLOR_SEQ, PLOTLY_TEMPLATE
 
 
 def _numeric(df: pd.DataFrame, column: str, default: float = 0.0) -> pd.Series:
-    """Ambil kolom numerik; jika kolom tidak ada, gunakan nilai default."""
+    """Get a numeric column; use the default value if the column is missing."""
     if column not in df.columns:
         return pd.Series(default, index=df.index, dtype="float64")
     return pd.to_numeric(df[column], errors="coerce").fillna(default).astype(float)
 
 
 def _safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
-    """Pembagian aman untuk menghindari pembagian dengan nol."""
+    """Safe division to avoid dividing by zero."""
     return numerator.div(denominator.replace(0, np.nan)).replace(
         [np.inf, -np.inf], np.nan
     )
 
 
 def _prepare_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Siapkan metrik attacking tanpa memodifikasi DataFrame dari app.py."""
+    """Prepare attacking metrics without modifying the DataFrame from app.py."""
     data = df.copy().reset_index(drop=True)
 
     for col in ["goals", "xg", "npxg", "shots", "shots_on_target", "sca", "minutes"]:
@@ -116,12 +110,12 @@ def _player_table(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def _goals_vs_xg_chart(data: pd.DataFrame) -> None:
-    """Grafik perbandingan gol aktual dengan expected goals."""
+    """Chart comparing actual goals against expected goals."""
 
     chart_data = data.dropna(subset=["goals", "xg"]).copy()
 
     if chart_data.empty:
-        st.info("Data Goals dan xG belum tersedia untuk filter ini.")
+        st.info("Goals and xG data are not available for this filter.")
         return
 
     position_colors = {
@@ -199,10 +193,10 @@ def _goals_vs_xg_chart(data: pd.DataFrame) -> None:
 
 
 def _finishing_chart(data: pd.DataFrame) -> None:
-    """Grafik efisiensi finishing berdasarkan Goals - xG."""
+    """Finishing efficiency chart based on Goals - xG."""
 
     if data.empty:
-        st.info("Tidak ada pemain yang memenuhi minimum xG.")
+        st.info("No players meet the minimum xG threshold.")
         return
 
     top = data.nlargest(
@@ -255,7 +249,7 @@ def _finishing_chart(data: pd.DataFrame) -> None:
 
 
 def _sca_chart(data: pd.DataFrame) -> None:
-    """Grafik ranking Shot-Creating Actions per 90 menit."""
+    """Ranking chart of Shot-Creating Actions per 90 minutes."""
 
     chart_data = data.dropna(
         subset=["sca_per90"]
@@ -263,7 +257,7 @@ def _sca_chart(data: pd.DataFrame) -> None:
 
     if chart_data.empty or chart_data["sca_per90"].max() <= 0:
         st.info(
-            "Data Shot-Creating Actions belum tersedia untuk filter ini."
+            "Shot-Creating Actions data are not available for this filter."
         )
         return
 
@@ -311,27 +305,27 @@ def _sca_chart(data: pd.DataFrame) -> None:
 
 
 def render(df: pd.DataFrame) -> None:
-    """Render seluruh analisis attacking pada tab dashboard Streamlit."""
+    """Render the full attacking analysis on the Streamlit dashboard tab."""
 
     st.subheader("Attacking Analytics & Finishing")
 
     st.caption(
-        "Analisis gol, kualitas peluang (xG), efisiensi finishing, "
-        "volume tembakan, dan kontribusi penciptaan peluang. "
-        "Hasil mengikuti filter global."
+        "Analysis of goals, chance quality (xG), finishing efficiency, "
+        "shot volume, and chance-creation contribution. "
+        "Results follow the global filters."
     )
 
     if df is None or df.empty:
         st.warning(
-            "Tidak ada pemain yang cocok dengan filter saat ini. "
-            "Coba turunkan minimum minutes atau pilih liga/posisi lain."
+            "No players match the current filters. "
+            "Try lowering the minimum minutes or picking a different league/position."
         )
         return
 
     if "goals" not in df.columns or "xg" not in df.columns:
         st.error(
-            "Kolom wajib 'goals' dan/atau 'xg' tidak ditemukan. "
-            "Periksa utils/data_loader.py."
+            "Required columns 'goals' and/or 'xg' were not found. "
+            "Check utils/data_loader.py."
         )
         return
 
@@ -371,8 +365,8 @@ def render(df: pd.DataFrame) -> None:
         "Goals − xG",
         f"{total_goals - total_xg:+.1f}",
         help=(
-            "Positif berarti gol aktual lebih banyak dari "
-            "ekspektasi xG; bukan bukti tunggal kemampuan finishing."
+            "Positive means actual goals exceed xG "
+            "expectation; not a standalone proof of finishing skill."
         ),
     )
 
@@ -380,7 +374,7 @@ def render(df: pd.DataFrame) -> None:
         "Shot accuracy",
         f"{shot_accuracy:.1f}%"
         if pd.notna(shot_accuracy) else "—",
-        help="Total shots on target dibagi total shots.",
+        help="Total shots on target divided by total shots.",
     )
 
     # 1. GOALS VS EXPECTED GOALS
@@ -389,10 +383,9 @@ def render(df: pd.DataFrame) -> None:
     st.markdown("#### 1. Actual Goals vs Expected Goals")
 
     st.caption(
-        "Setiap titik mewakili satu pemain. Titik di atas garis "
-        "putus-putus mencetak gol lebih banyak daripada xG; "
-        "titik di bawah garis mencetak lebih sedikit. "
-        "Ukuran titik menunjukkan jumlah tembakan."
+        "Each point represents one player. Points above the dashed "
+        "line scored more goals than xG; points below the line "
+        "scored fewer. Point size reflects shot volume."
     )
 
     _goals_vs_xg_chart(data)
@@ -410,22 +403,22 @@ def render(df: pd.DataFrame) -> None:
     )
 
     min_xg = st.slider(
-        "Minimum xG untuk ranking finishing",
+        "Minimum xG for the finishing ranking",
         min_value=0.0,
         max_value=slider_max,
         value=min(3.0, slider_max),
         step=0.5,
         help=(
-            "Ambang xG mengurangi ranking yang terlalu "
-            "dipengaruhi sampel kecil."
+            "The xG threshold reduces rankings being skewed "
+            "by small samples."
         ),
     )
 
     eligible = data[data["xg"] >= min_xg].copy()
 
     st.caption(
-        f"{len(eligible)} pemain memenuhi ambang xG ≥ {min_xg:.1f}. "
-        "Nilai positif berarti overperformance terhadap xG."
+        f"{len(eligible)} players meet the xG threshold ≥ {min_xg:.1f}. "
+        "Positive values mean overperformance relative to xG."
     )
 
     finish_col, table_col = st.columns([1.15, 1])
@@ -434,11 +427,11 @@ def render(df: pd.DataFrame) -> None:
         _finishing_chart(eligible)
 
     with table_col:
-        st.markdown("**Pemain dengan Goals − xG tertinggi**")
+        st.markdown("**Players with the highest Goals − xG**")
 
         if eligible.empty:
             st.info(
-                "Turunkan ambang minimum xG untuk melihat ranking."
+                "Lower the minimum xG threshold to see the ranking."
             )
         else:
             st.dataframe(
@@ -455,9 +448,9 @@ def render(df: pd.DataFrame) -> None:
     st.markdown("#### 3. Shot-Creating Actions")
 
     st.caption(
-        "SCA menghitung aksi ofensif yang berujung pada tembakan. "
-        "Nilai per 90 menit membantu membandingkan pemain "
-        "dengan waktu bermain berbeda."
+        "SCA counts offensive actions that lead to a shot. "
+        "Per-90 values help compare players with "
+        "different playing time."
     )
 
     sca_col, note_col = st.columns([1.15, 1])
@@ -483,14 +476,14 @@ def render(df: pd.DataFrame) -> None:
             st.write(
                 f"**{creator['player']}** "
                 f"({creator['team']}, {creator['pos']}) "
-                f"mencatat {creator['sca']:.0f} "
-                "Shot-Creating Actions dalam "
+                f"recorded {creator['sca']:.0f} "
+                "Shot-Creating Actions across "
                 f"{creator['nineties']:.1f} "
-                "90-menit pertandingan."
+                "90-minute matches played."
             )
         else:
             st.info(
-                "Belum ada catatan SCA pada pemain yang dipilih."
+                "No SCA data recorded yet for the selected players."
             )
 
     # KEY INSIGHT DINAMIS
@@ -506,16 +499,16 @@ def render(df: pd.DataFrame) -> None:
         ]
 
         insights.append(
-            f"Pemain dengan Goals − xG tertinggi adalah "
+            f"The player with the highest Goals − xG is "
             f"**{best['player']}** ({best['team']}): "
-            f"{best['goals']:.0f} gol dari {best['xg']:.1f} xG "
-            f"(**{best['finishing_delta']:+.1f}** terhadap ekspektasi)."
+            f"{best['goals']:.0f} goals from {best['xg']:.1f} xG "
+            f"(**{best['finishing_delta']:+.1f}** against expectation)."
         )
 
         insights.append(
-            f"Selisih terendah pada sampel ini dimiliki "
+            f"The lowest differential in this sample belongs to "
             f"**{worst['player']}** ({worst['team']}) "
-            f"dengan Goals − xG "
+            f"with a Goals − xG of "
             f"**{worst['finishing_delta']:+.1f}**."
         )
 
@@ -524,16 +517,16 @@ def render(df: pd.DataFrame) -> None:
     ]
 
     insights.append(
-        f"Top scorer pada filter ini adalah "
+        f"The top scorer under this filter is "
         f"**{top_scorer['player']}** ({top_scorer['team']}) "
-        f"dengan {top_scorer['goals']:.0f} gol "
-        f"dari {top_scorer['xg']:.1f} xG."
+        f"with {top_scorer['goals']:.0f} goals "
+        f"from {top_scorer['xg']:.1f} xG."
     )
 
     if pd.notna(overall_sca_per90):
         insights.append(
-            f"Rata-rata tertimbang SCA pada sampel adalah "
-            f"**{overall_sca_per90:.2f} per 90 menit**."
+            f"The weighted average SCA across this sample is "
+            f"**{overall_sca_per90:.2f} per 90 minutes**."
         )
 
     st.divider()
@@ -543,7 +536,7 @@ def render(df: pd.DataFrame) -> None:
     )
 
     st.caption(
-        "Catatan: Goals − xG dapat dipengaruhi variasi, penalti, "
-        "kualitas model xG, dan ukuran sampel. Gunakan bersama "
-        "menit bermain, jumlah tembakan, serta konteks pertandingan."
+        "Note: Goals − xG can be affected by variance, penalties, "
+        "xG model quality, and sample size. Use it alongside "
+        "minutes played, shot volume, and match context."
     )
